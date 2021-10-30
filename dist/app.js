@@ -10,7 +10,11 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const morgan_1 = __importDefault(require("morgan"));
 const index_1 = __importDefault(require("./routes/index"));
 const users_1 = __importDefault(require("./routes/users"));
-var app = (0, express_1.default)();
+const dotenv_1 = __importDefault(require("dotenv"));
+const db_1 = __importDefault(require("./config/db"));
+dotenv_1.default.config();
+const app = (0, express_1.default)();
+(0, db_1.default)();
 // view engine setup
 app.set('views', path_1.default.join(__dirname, "..", 'views'));
 app.set('view engine', 'ejs');

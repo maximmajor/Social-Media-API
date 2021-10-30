@@ -6,8 +6,13 @@ import logger from 'morgan';
 import { Request, Response, NextFunction } from 'express';
 import indexRouter from './routes/index';
 import usersRouter from './routes/users';
+import dotenv from 'dotenv'
+import connectDB from './config/db';
 
-var app = express();
+dotenv.config()
+const  app = express();
+
+connectDB();
 
 // view engine setup
 app.set('views', path.join(__dirname, ".." ,'views'));
