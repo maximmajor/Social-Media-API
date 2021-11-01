@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 const router = express.Router();
 import bcrypt from "bcrypt"
 import Post from "../models/post"
+import User from '../models/user';
 
 
 // Create Post
@@ -50,6 +51,51 @@ router.put('/:id', async (req: any, res: Response, next: NextFunction) => {
             }
         });
 
+
+        //Like and dislike a post
+        router.put('/:id/likes', async (req: any, res: Response, next: NextFunction) => {
+    try{  
+            const post = await Post.findById(req.params.id)
+            if (!post.likes.includes(req.body.userId)) {
+                await post.updateOne({$push: {likes: req.body.userId}})
+                res.status(200).json("the post has been liked")
+            }
+            else{
+                await post.updateOne({$pull: {likes: req.body.userId}})
+                res.status(200).json("the post has been disliked")
+            }
         
+        } catch (err){
+            res.status(500).json(err)
+        }
+            });    
+
+
+            //get a post 
+            router.get('/:id', async (req: any, res: Response, next: NextFunction) => {
+                try{  
+                        const post = await Post.findById(req.params.id)
+                        res.status(200).json(post)
+                    
+                    } catch (err){
+                        res.status(500).json(err)
+                    }
+                        });    
+
+// get timeline posts
+router.get('/timeline/all', async (req: any, res: Response, next: NextFunction) => {
+      let postArray = []
+    try{  
+            const currentUser = await User.findById(req.body.userId)
+            const userPosts = await Post.find({ userId: currentUser._id})
+            const friendPosts = await Promise.all(currentUser.following.map((friendId: any) => {
+              return  Post.find({userId: friendId}) 
+            })
+            )
+            res.json(userPosts.concat(...friendPosts))
+        } catch (err){
+            res.status(500).json(err)
+        }
+            });  
 
 export default router;

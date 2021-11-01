@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const router = express_1.default.Router();
 const post_1 = __importDefault(require("../models/post"));
+const user_1 = __importDefault(require("../models/user"));
 // Create Post
 router.post('/', async (req, res, next) => {
     const newPost = new post_1.default(req.body);
@@ -44,6 +45,48 @@ router.delete('/:id', async (req, res, next) => {
         else {
             res.status(403).json("you can delete only your post");
         }
+    }
+    catch (err) {
+        res.status(500).json(err);
+    }
+});
+//Like and dislike a post
+router.put('/:id/likes', async (req, res, next) => {
+    try {
+        const post = await post_1.default.findById(req.params.id);
+        if (!post.likes.includes(req.body.userId)) {
+            await post.updateOne({ $push: { likes: req.body.userId } });
+            res.status(200).json("the post has been liked");
+        }
+        else {
+            await post.updateOne({ $pull: { likes: req.body.userId } });
+            res.status(200).json("the post has been disliked");
+        }
+    }
+    catch (err) {
+        res.status(500).json(err);
+    }
+});
+//get a post 
+router.get('/:id', async (req, res, next) => {
+    try {
+        const post = await post_1.default.findById(req.params.id);
+        res.status(200).json(post);
+    }
+    catch (err) {
+        res.status(500).json(err);
+    }
+});
+// get timeline posts
+router.get('/timeline/all', async (req, res, next) => {
+    let postArray = [];
+    try {
+        const currentUser = await user_1.default.findById(req.body.userId);
+        const userPosts = await post_1.default.find({ userId: currentUser._id });
+        const friendPosts = await Promise.all(currentUser.following.map((friendId) => {
+            return post_1.default.find({ userId: friendId });
+        }));
+        res.json(userPosts.concat(...friendPosts));
     }
     catch (err) {
         res.status(500).json(err);
