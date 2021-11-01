@@ -51,10 +51,57 @@ router.delete('/:id', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
     try {
         const user = await user_1.default.findById(req.params.id);
-        res.status(200).json(user);
+        const { password, updatedAt, ...other } = user._doc;
+        res.status(200).json(other);
     }
     catch (err) {
         res.status(500).json(err);
+    }
+});
+//FOLLOW USER
+router.put('/:id/follow', async (req, res, next) => {
+    if (req.body.userId !== req.params.id) {
+        try {
+            const user = await user_1.default.findById(req.params.id);
+            const currentUser = await user_1.default.findById(req.body.userId);
+            if (!user.followers.includes(req.body.userId)) {
+                await user.updateOne({ $push: { followers: req.body.userId } });
+                await currentUser.updateOne({ $push: { following: req.body.userId } });
+                res.status(200).json("user has been followed");
+            }
+            else {
+                res.status(403).json("you already follow this user");
+            }
+        }
+        catch (err) {
+            res.status(500).json(err);
+        }
+    }
+    else {
+        res.status(403).json("you cant follow yourself");
+    }
+});
+//UNFOLLOW USER
+router.put('/:id/unfollow', async (req, res, next) => {
+    if (req.body.userId !== req.params.id) {
+        try {
+            const user = await user_1.default.findById(req.params.id);
+            const currentUser = await user_1.default.findById(req.body.userId);
+            if (user.followers.includes(req.body.userId)) {
+                await user.updateOne({ $pull: { followers: req.body.userId } });
+                await currentUser.updateOne({ $pull: { following: req.body.userId } });
+                res.status(200).json("user has been unfollowed");
+            }
+            else {
+                res.status(403).json("you dont follow this user");
+            }
+        }
+        catch (err) {
+            res.status(500).json(err);
+        }
+    }
+    else {
+        res.status(403).json("you cant follow yourself");
     }
 });
 exports.default = router;
